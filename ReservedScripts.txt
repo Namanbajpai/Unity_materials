@@ -1,0 +1,277 @@
+###### Perfect working script for dragging using mouse.
+
+using UnityEngine;
+
+public class DragAndDrop : MonoBehaviour
+{
+    private bool isDragging = false;
+    private Vector3 offset;
+
+    void OnMouseDown()
+    {
+        isDragging = true;
+        offset = transform.position - MouseWorldPosition();
+    }
+
+    void OnMouseDrag()
+    {
+        if (isDragging)
+            transform.position = MouseWorldPosition() + offset;// object ko move karane ke liye offset add karenge uski position
+        // main phir mouse ki world position bhi jisse ki chipak kar chale mouse se.
+    }
+
+    void OnMouseUp()
+    {
+        isDragging = false;
+    }
+
+    Vector3 MouseWorldPosition()
+    {
+        var mouseScreenPos = Input.mousePosition;
+        mouseScreenPos.z = Camera.main.WorldToScreenPoint(transform.position).z;// this line is written to ensure that the z-coordinate of the mouse position in screen space  mouse ki z coordinate waali position bhi camera se distance
+        // hain aur object ki convert ke baaad bhi whi hain toh dono same kar rhe.
+        return Camera.main.ScreenToWorldPoint(mouseScreenPos);
+    }
+}
+
+
+
+####### Perfect script for camera zoom in and out functionality using mousescrollwheel
+
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+public class NewBehaviourScript : MonoBehaviour
+{
+    public float zoomSpeed = 5.0f;
+    public float minZoom = 1.0f;
+    public float maxZoom = 10.0f;
+
+    void Update()
+    {
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        Vector3 zoom = transform.localPosition + transform.forward * scroll * zoomSpeed;
+
+        // Clamp zoom to minZoom and maxZoom
+        zoom.z = Mathf.Clamp(zoom.z, -maxZoom, -minZoom);
+
+        transform.localPosition = zoom;
+    }
+
+
+}
+
+
+
+############### SCRIPT FOR CAMERA MOVEMENT USING WASDEQ KEYS AS WELL AS SCROLL WHEEL
+
+using UnityEngine;
+
+public class CameraController : MonoBehaviour
+{
+
+    [SerializeField] private float moveSpeed = 20f;
+    [SerializeField] private float zoomSpeed = 5.0f;
+    [SerializeField] private float minZoom = 1.0f;
+    [SerializeField] private float maxZoom = 10.0f;
+    [SerializeField] private float verticalMoveSpeed = 20f;
+
+    private void Update()
+    {
+        HandleMovementInput();
+        HandleZoomInput();
+    }
+
+    private void HandleMovementInput()
+    {
+        float horizontalMovement = Input.GetAxis("Horizontal");
+        float verticalMovement = Input.GetAxis("Vertical");
+
+        Vector3 moveDirection = CalculateMoveDirection(horizontalMovement, verticalMovement);
+        transform.localPosition += moveDirection * moveSpeed * Time.deltaTime;
+
+        HandleVerticalMovement();
+    }
+
+    private void HandleZoomInput()
+    {
+        float scrollInput = Input.GetAxis("Mouse ScrollWheel");
+        float zoomDelta = scrollInput * zoomSpeed;
+
+        // Calculate new position with zoom
+        Vector3 zoomPosition = transform.localPosition + transform.forward * zoomDelta;
+
+        // Clamp zoom position to minZoom and maxZoom
+        zoomPosition.z = Mathf.Clamp(zoomPosition.z, -maxZoom, -minZoom);
+
+        // Update camera position
+        transform.localPosition = zoomPosition;
+    }
+
+    private Vector3 CalculateMoveDirection(float horizontal, float vertical)
+    {
+        Vector3 moveDirection = transform.right * horizontal + transform.forward * vertical;
+        moveDirection.Normalize();
+        return moveDirection;
+    }
+
+    private void HandleVerticalMovement()
+    {
+        if (Input.GetKey(KeyCode.Q))
+            transform.localPosition += Vector3.down * verticalMoveSpeed * Time.deltaTime;
+        else if (Input.GetKey(KeyCode.E))
+            transform.localPosition += Vector3.up * verticalMoveSpeed * Time.deltaTime;
+    }
+}
+
+
+
+
+
+############## Program to get total number of child in any 3d model.
+
+using System.Linq;
+using UnityEngine;
+
+public class ModelDissasemble : MonoBehaviour
+{
+    private void Start()
+    {
+        int totalChildCount = GetTotalCountOfChildren(transform);
+        Debug.Log("Total child count: " + totalChildCount);
+    }
+
+    public int GetTotalCountOfChildren(Transform parent)
+    {
+        return parent.GetComponentsInChildren<Transform>().Count();
+    }
+}
+
+
+
+########### how to create GENERIC EVENTS in unity.(Don't know which function to call on event invoke).
+
+using System;
+
+public static class EventManager
+{
+    // Define a static event of type Action
+    public static event Action OnGameStart;
+
+    // Method to trigger the event
+    public static void TriggerGameStart()
+    {
+        // Invoke the event if there are any subscribers
+        OnGameStart?.Invoke();
+    }
+
+    // Method to subscribe to the event
+    public static void SubscribeToGameStart(Action listener)
+    {
+        OnGameStart += listener;
+    }
+
+    // Method to unsubscribe from the event
+    public static void UnsubscribeFromGameStart(Action listener)
+    {
+        OnGameStart -= listener;
+    }
+}
+
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Demo2 : MonoBehaviour
+{
+    void OnEnable()
+    {
+        // Subscribe the OnGameStart method to the OnGameStart event
+        EventManager.SubscribeToGameStart(OnGameStart);
+    }
+
+    void OnDisable()
+    {
+        // Unsubscribe the OnGameStart method from the OnGameStart event
+        EventManager.UnsubscribeFromGameStart(OnGameStart);
+    }
+
+    void OnGameStart()
+    {
+        // This method will be called when the OnGameStart event is triggered
+        Debug.Log("Game has started!");
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            // For demonstration purposes, trigger the event when the game starts
+            EventManager.TriggerGameStart();
+        }
+    }
+}
+
+
+
+########### how to create GENERIC EVENTS in unity(here fun call on event invoke has parameter also).(Don't know which function to call on event invoke).
+
+
+using System;
+
+public static class EventManager
+{
+    // Define a static event of type Action<T>
+    public static event Action<int> OnScoreChanged;
+
+    // Method to trigger the event
+    public static void TriggerScoreChanged(int score)
+    {
+        OnScoreChanged?.Invoke(score);
+    }
+
+    // Method to subscribe to the event
+    public static void SubscribeToScoreChanged(Action<int> listener)
+    {
+        OnScoreChanged += listener;
+    }
+
+    // Method to unsubscribe from the event
+    public static void UnsubscribeFromScoreChanged(Action<int> listener)
+    {
+        OnScoreChanged -= listener;
+    }
+}
+
+
+using UnityEngine;
+
+public class GameManager : MonoBehaviour
+{
+    void OnEnable()
+    {
+        EventManager.SubscribeToScoreChanged(OnScoreChanged);
+    }
+
+    void OnDisable()
+    {
+        EventManager.UnsubscribeFromScoreChanged(OnScoreChanged);
+    }
+
+    void OnScoreChanged(int newScore)
+    {
+        Debug.Log("Score changed: " + newScore);
+    }
+
+    // For demonstration purposes, let's trigger the event with a new score
+    void Start()
+    {
+        EventManager.TriggerScoreChanged(100);
+    }
+}
+
